@@ -1,8 +1,10 @@
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
-from typing import Self
+from typing import Self, Annotated
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, FiniteFloat, field_validator, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, FiniteFloat, StringConstraints, field_validator, model_validator
+
+SensorIdStr = Annotated[str, StringConstraints(min_length=1, max_length=64, pattern="^[A-Za-z0-9_-]+$")]
 
 TIME_SKEW = timedelta(seconds=60)
 DAY = timedelta(days=1)
@@ -39,7 +41,7 @@ class GetStats(BaseModel):
     model_config = ConfigDict(extra="forbid")
     metric: list[Metric] = Field(min_length=1)
     # provide a sensor for specifics, leave empty for all sensors
-    sensor_id: list[str] = Field(default_factory=list)
+    sensor_id: list[SensorIdStr] = Field(default_factory=list)
     stat: Statistic = Statistic.AVG
     start_range: AwareDatetime | None = None
     end_range: AwareDatetime | None = None
