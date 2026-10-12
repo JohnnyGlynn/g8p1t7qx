@@ -1,18 +1,6 @@
 import sqlite3
-from collections.abc import Iterator
-
-import pytest
 
 from weather_sensor_api import db
-
-
-@pytest.fixture
-def connection() -> Iterator[sqlite3.Connection]:
-    conn = db.connect(":memory:")#test db path
-    db.init_db(conn)
-    yield conn
-    conn.close()
-
 
 def test_sensor_aggregates(connection: sqlite3.Connection) -> None:
     db.insert_reading(connection, "Base_Station", 100, {"temperature": 10.0, "humidity": 67.0})
