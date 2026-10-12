@@ -61,8 +61,8 @@ def get_stats(
     *,
     metrics: Sequence[str],
     stat: str,
-    start: int,
-    end: int,
+    start_range: int,
+    end_range: int,
     sensor_ids: Sequence[str] | None = None,
 ) -> list[dict[str, Any]]:
     agg = AGGREGATES.get(stat)
@@ -76,7 +76,7 @@ def get_stats(
             AND recorded_at >= ? AND recorded_at < ?
     """
 
-    params: list[object] = [*metrics, start, end]
+    params: list[object] = [*metrics, start_range, end_range]
 
     # multiple sensors
     if sensor_ids:

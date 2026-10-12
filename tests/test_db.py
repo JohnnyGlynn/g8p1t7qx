@@ -11,8 +11,8 @@ def test_sensor_aggregates(connection: sqlite3.Connection) -> None:
         connection,
         metrics=["temperature", "humidity", "wind_speed"],
         stat="avg",
-        start=0,
-        end=1000,
+        start_range=0,
+        end_range=1000,
     )
 
     assert rows == [

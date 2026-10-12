@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from weather_sensor_api import db
 
+# READINGS
 def test_take_reading_storage(connection: sqlite3.Connection, client: TestClient) -> None:
 
     resp = client.post(
@@ -24,11 +25,19 @@ def test_take_reading_storage(connection: sqlite3.Connection, client: TestClient
         connection,
         metrics=["temperature", "wind_speed"],
         stat="sum",
-        start=timestamp,
-        end=timestamp + 1,
+        start_range=timestamp,
+        end_range=timestamp + 1,
     )
 
     assert [(r["metric"], r["value"]) for r in rows] == [
         ("temperature", 10.0),
         ("wind_speed", 27.0),
     ]
+
+# STATS
+def test_empty_return(client: TestClient) -> None:
+    resp = client.get("/readings/stats", params={"metric": "temperature"})
+
+    assert resp.status_code == 200
+    assert resp.json()["results"] == []
+

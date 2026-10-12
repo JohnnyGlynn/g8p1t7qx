@@ -4,10 +4,17 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, closing
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, Path, status
+from fastapi import Depends, FastAPI, Path, status, Query
 
 from weather_sensor_api import db
-from weather_sensor_api.schema import TakeReading, DisplayReading
+from weather_sensor_api.schema import (
+    DAY,
+    StatResult,
+    TakeReading,
+    DisplayReading,
+    GetStats,
+    DisplayStats,
+)
 
 # regex: Numbers, letters, hyphen, underscore, 1 or more
 SensorId = Annotated[str, Path(min_length=1, max_length=64, pattern="^[A-Za-z0-9_-]+$")]
@@ -44,4 +51,28 @@ def take_reading(
         sensor_id=sensor_id,
         recorded_at=datetime.fromtimestamp(recorded_at, UTC),
         metrics=reading.metrics,
+    )
+
+
+@app.get("/readings/stats")
+def get_stats(query: Annotated[GetStats, Query()], conn: Connection) -> DisplayStats:
+    if query.start_range is not None and query.end_range is not None:
+        start, end = query.start_range, query.end_range
+    else:
+        end = datetime.now(UTC)
+        start = end - DAY
+
+    rows = db.get_stats(
+        conn,
+        metrics=[m.value for m in query.metric],
+        stat=query.stat.value,
+        start_range=int(start.timestamp()),
+        end_range=int(end.timestamp()),
+        sensor_ids=query.sensor_id,
+    )
+    return DisplayStats(
+        start_range=start,
+        end_range=end,
+        stat=query.stat,
+        results=[StatResult.model_validate(row) for row in rows],
     )
