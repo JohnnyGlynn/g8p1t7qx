@@ -85,6 +85,11 @@ def get_stats(
     sql += " GROUP BY sensor_id, metric ORDER BY sensor_id, metric"
     return [dict(row) for row in conn.execute(sql, params)]
 
+def decommission_sensor(conn: sqlite3.Connection, sensor_id: str) -> int:
+    with conn:
+        result = conn.execute("DELETE FROM readings WHERE sensor_id = ?", (sensor_id,)) #trailing , for tuple
+    return result.rowcount
+
 
 def _placeholders(values: Sequence[object]) -> str:
     return ", ".join("?" * len(values))

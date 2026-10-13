@@ -4,9 +4,9 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, closing
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, Path, status, Query
+from fastapi import Depends, FastAPI, HTTPException, Path, status, Query
 
-from weather_sensor_api import db
+from weather_sensor_api import db, auth
 from weather_sensor_api.schema import (
     DAY,
     StatResult,
@@ -15,6 +15,8 @@ from weather_sensor_api.schema import (
     GetStats,
     DisplayStats,
 )
+
+RequireKey = Depends(auth.require_key)
 
 # regex: Numbers, letters, hyphen, underscore, 1 or more
 SensorId = Annotated[str, Path(min_length=1, max_length=64, pattern="^[A-Za-z0-9_-]+$")]
@@ -36,7 +38,7 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.post("/sensors/{sensor_id}/readings", status_code=status.HTTP_201_CREATED)
+@app.post("/sensors/{sensor_id}/readings", status_code=status.HTTP_201_CREATED, dependencies=[RequireKey])
 def take_reading(
     sensor_id: SensorId, reading: TakeReading, conn: Connection
 ) -> DisplayReading:
@@ -52,6 +54,11 @@ def take_reading(
         recorded_at=datetime.fromtimestamp(recorded_at, UTC),
         metrics=reading.metrics,
     )
+
+@app.delete("/sensors/{sensor_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[RequireKey])
+def decommission_sensor(sensor_id: SensorId, conn: Connection) -> None:
+    if db.decommission_sensor(conn, sensor_id) == 0:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"sensor not found {sensor_id}")
 
 
 @app.get("/readings/stats")
