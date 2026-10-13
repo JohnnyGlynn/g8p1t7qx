@@ -1,19 +1,19 @@
 import sqlite3
-from datetime import datetime, UTC
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, closing
+from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Path, status, Query
+from fastapi import Depends, FastAPI, HTTPException, Path, Query, status
 
-from weather_sensor_api import db, auth
+from weather_sensor_api import auth, db
 from weather_sensor_api.schema import (
     DAY,
+    DisplayReading,
+    DisplayStats,
+    GetStats,
     StatResult,
     TakeReading,
-    DisplayReading,
-    GetStats,
-    DisplayStats,
 )
 
 RequireKey = Depends(auth.require_key)
@@ -38,7 +38,11 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.post("/sensors/{sensor_id}/readings", status_code=status.HTTP_201_CREATED, dependencies=[RequireKey])
+@app.post(
+    "/sensors/{sensor_id}/readings",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[RequireKey],
+)
 def take_reading(
     sensor_id: SensorId, reading: TakeReading, conn: Connection
 ) -> DisplayReading:
@@ -55,7 +59,12 @@ def take_reading(
         metrics=reading.metrics,
     )
 
-@app.delete("/sensors/{sensor_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[RequireKey])
+
+@app.delete(
+    "/sensors/{sensor_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[RequireKey],
+)
 def decommission_sensor(sensor_id: SensorId, conn: Connection) -> None:
     if db.decommission_sensor(conn, sensor_id) == 0:
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"sensor not found {sensor_id}")

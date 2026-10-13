@@ -1,4 +1,5 @@
 import sqlite3
+
 import pytest
 
 from weather_sensor_api import db
@@ -48,11 +49,18 @@ def test_statistics(connection: sqlite3.Connection, stat: str, expected: float) 
 
     assert row["value"] == expected
 
+
 def test_sensor_filter(connection: sqlite3.Connection) -> None:
     db.insert_reading(connection, "Turbine", 10, {"temperature": 4.0})
     db.insert_reading(connection, "Base_Station", 15, {"temperature": 5.0})
 
-    rows = db.get_stats(connection, metrics=["temperature"], stat="avg", start_range=0, end_range=20, sensor_ids=["Base_Station"])
+    rows = db.get_stats(
+        connection,
+        metrics=["temperature"],
+        stat="avg",
+        start_range=0,
+        end_range=20,
+        sensor_ids=["Base_Station"],
+    )
 
     assert [r["sensor_id"] for r in rows] == ["Base_Station"]
-

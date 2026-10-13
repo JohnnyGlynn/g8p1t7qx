@@ -1,19 +1,32 @@
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
-from typing import Self, Annotated
+from typing import Annotated, Self
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, FiniteFloat, StringConstraints, field_validator, model_validator
+from pydantic import (
+    AwareDatetime,
+    BaseModel,
+    ConfigDict,
+    Field,
+    FiniteFloat,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 
-SensorIdStr = Annotated[str, StringConstraints(min_length=1, max_length=64, pattern="^[A-Za-z0-9_-]+$")]
+SensorIdStr = Annotated[
+    str, StringConstraints(min_length=1, max_length=64, pattern="^[A-Za-z0-9_-]+$")
+]
 
 TIME_SKEW = timedelta(seconds=60)
 DAY = timedelta(days=1)
 MONTH = timedelta(days=31)
 
+
 class Metric(StrEnum):
     TEMPERATURE = "temperature"
     HUMIDITY = "humidity"
     WIND_SPEED = "wind_speed"
+
 
 class Statistic(StrEnum):
     MIN = "min"
@@ -37,6 +50,7 @@ class TakeReading(BaseModel):
             raise ValueError("reading cannot be from the future")
         return value
 
+
 class GetStats(BaseModel):
     model_config = ConfigDict(extra="forbid")
     metric: list[Metric] = Field(min_length=1)
@@ -50,11 +64,17 @@ class GetStats(BaseModel):
     @model_validator(mode="after")
     def time_range(self) -> Self:
         if (self.start_range is None) != (self.end_range is None):
-            raise ValueError("start and end of range are required, provide neither for Last 24hrs")
-        if self.start_range is not None and self.end_range is not None:
-            if not DAY <= self.end_range - self.start_range <= MONTH:
-                raise ValueError("Range limited between 1 and 31 days")
+            raise ValueError(
+                "start_range and end_range are required, provide neither for Last 24hrs"
+            )
+        if (
+            self.start_range is not None
+            and self.end_range is not None
+            and not DAY <= self.end_range - self.start_range <= MONTH
+        ):
+            raise ValueError("Range limited between 1 and 31 days")
         return self
+
 
 class StatResult(BaseModel):
     sensor_id: str
@@ -62,11 +82,13 @@ class StatResult(BaseModel):
     value: float
     count: int
 
+
 class DisplayStats(BaseModel):
     start_range: datetime
     end_range: datetime
     stat: Statistic
     results: list[StatResult]
+
 
 class DisplayReading(BaseModel):
     sensor_id: str
