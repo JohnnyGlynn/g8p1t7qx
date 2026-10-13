@@ -17,7 +17,7 @@ SCHEMA = """
     CREATE INDEX IF NOT EXISTS idx_readings ON readings (sensor_id, metric, recorded_at);
 """
 
-# Allowed names to be interpolated in query
+# Allowed stats to be interpolated in query
 AGGREGATES = {"min": "MIN", "max": "MAX", "sum": "SUM", "avg": "AVG"}
 
 
@@ -27,7 +27,6 @@ def connect(path: str, *, check_same_thread: bool = True) -> sqlite3.Connection:
     return conn
 
 
-# TODO: Populate DB with sample data here?
 def init_db(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
 
