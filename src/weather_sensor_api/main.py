@@ -1,10 +1,12 @@
+import logging
 import sqlite3
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, closing
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, Path, Query, status
+from fastapi import Depends, FastAPI, HTTPException, Path, Query, Request, status
+from fastapi.responses import JSONResponse
 
 from weather_sensor_api import auth, db
 from weather_sensor_api.schema import (
@@ -31,6 +33,24 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="Weather Sensor API", lifespan=lifespan)
+
+logger = logging.getLogger(__name__)
+
+
+# db error
+@app.exception_handler(sqlite3.Error)
+async def handle_db_error(request: Request, exc: sqlite3.Error) -> JSONResponse:
+    logger.exception("db error... request: %s %s", request.method, request.url.path)
+    return JSONResponse(status_code=500, content={"detail": "internal db error"})
+
+
+# catch all
+@app.exception_handler(Exception)
+async def handle_unexpected_error(request: Request, exc: Exception) -> JSONResponse:
+    logger.exception(
+        "unhandled error... request: %s %s", request.method, request.url.path
+    )
+    return JSONResponse(status_code=500, content={"detail": "internal server error"})
 
 
 @app.get("/health")

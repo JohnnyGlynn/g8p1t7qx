@@ -10,7 +10,7 @@ from weather_sensor_api.main import app
 
 @pytest.fixture
 def connection() -> Iterator[sqlite3.Connection]:
-    conn = db.connect(":memory:", check_same_thread=False)  # test db path
+    conn = db.connect(":memory:")  # test db path
     db.init_db(conn)
     yield conn
     conn.close()

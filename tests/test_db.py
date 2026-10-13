@@ -1,8 +1,11 @@
 import sqlite3
+from pathlib import Path
 
 import pytest
+from fastapi.testclient import TestClient
 
 from weather_sensor_api import db
+from weather_sensor_api.main import app
 
 
 def test_sensor_aggregates(connection: sqlite3.Connection) -> None:
@@ -64,3 +67,12 @@ def test_sensor_filter(connection: sqlite3.Connection) -> None:
     )
 
     assert [r["sensor_id"] for r in rows] == ["Base_Station"]
+
+
+def test_real_connection(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(db, "DB_PATH", str(tmp_path / "test.db"))
+    with TestClient(app) as c:
+        assert (
+            c.get("/readings/stats", params={"metric": "temperature"}).status_code
+            == 200
+        )
