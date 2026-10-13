@@ -11,9 +11,11 @@ In order to run this PoC, you'll need Python 3.13 and [uv](https://docs.astral.s
 After cloning this repo, from its root:
 ```bash
 uv sync
-export WEATHER_SENSOR_API_KEY = $(python -c "import secrets; print(secrets.token_urlsafe(32))")
+export WEATHER_SENSOR_API_KEY=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
 uv run python scripts/seed.py
-echo $WEATHER_SENSOR_API_KEY # This will give you the key that the server knows, and can be used in another terminal for cURL
+echo $WEATHER_SENSOR_API_KEY
+# This will give you the key that the server knows, and can be used in another terminal for cURL
+# In your cURL terminal: export WEATHER_SENSOR_API_KEY=keydata
 uv run fastapi dev src/weather_sensor_api/main.py --port 8080
 ```
 
